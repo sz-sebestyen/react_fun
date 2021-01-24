@@ -9,17 +9,32 @@ const Border = styled.div`
 `;
 
 const AddButton = styled.button`
+  padding: 2px;
   &::before {
-    content: "+";
+    content: "Add child";
     display: inline;
   }
 `;
 
 const RemoveButton = styled.button`
-  background-color: red;
+  padding: 2px;
+  outline: none;
+  color: red;
   &::before {
     content: "×";
     display: inline;
+  }
+`;
+
+const Input = styled.input`
+  appearance: none;
+  border: none;
+  cursor: default;
+
+  :focus {
+    cursor: auto;
+    outline: none;
+    border-bottom: 1px solid black;
   }
 `;
 
@@ -77,8 +92,19 @@ const Bit = (props) => {
 
   return (
     <Border onClick={toggleFocus} name="border" listID={props.listID}>
-      <AddButton onClick={addChild} type="button" name="addButton" />
       {props.children}
+      <Input
+        type="text"
+        name="BitTitle"
+        placeholder="Untitled bit"
+        autoComplete="off"
+        onKeyDown={(event) => {
+          if (event.isComposing) return;
+          if (event.key === "Enter" || event.key === "Escape")
+            document.activeElement.blur();
+        }}
+      />
+      <AddButton onClick={addChild} type="button" name="addButton" />
       <RemoveButton onClick={removeThisBit} type="button" name="RemoveButton" />
       {state.inside}
     </Border>
