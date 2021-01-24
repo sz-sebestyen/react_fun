@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
+import { v4 as uuidv4 } from "uuid";
 
-const Border = styled.div`
+const Border = styled.div.attrs((props) => ({
+  style: props.inFocus ? { border: "1px solid orange" } : {},
+}))`
   height: 100%;
   border: 1px solid black;
   padding: 1px;
@@ -28,13 +31,30 @@ const RemoveButton = styled.button`
 
 const Input = styled.input`
   appearance: none;
+  width: 100px;
   border: none;
+  margin: 0 5px;
   cursor: default;
 
   :focus {
     cursor: auto;
     outline: none;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid #575757;
+  }
+`;
+
+const Description = styled.input`
+  appearance: none;
+  display: block;
+  width: 100%;
+  border: none;
+  margin: 1px 0 0;
+  cursor: default;
+  border: 1px solid #2b2b2b;
+
+  :focus {
+    cursor: auto;
+    outline: none;
   }
 `;
 
@@ -43,19 +63,22 @@ const Bit = (props) => {
     inFocus: false,
     inside: [],
     deleted: false,
-    idGen: 0,
+    justClicked: false,
   });
 
   const addChild = (e) => {
     e.stopPropagation();
     setState((s) => ({
       ...s,
-      idGen: s.idGen + 1,
       inside: [
         ...s.inside,
-        <Bit key={s.idGen} listID={s.idGen} removeMe={removeChild}>
-          {s.idGen}
-        </Bit>,
+        <Bit
+          key={uuidv4()}
+          listID={uuidv4()}
+          removeMe={removeChild}
+          moveFocus={props.moveFocus}
+          setRemovefocus={props.setRemovefocus}
+        />,
       ],
     }));
   };
@@ -75,12 +98,24 @@ const Bit = (props) => {
     }));
   };
 
-  const toggleFocus = (e) => {
-    //console.log(state.inside);
-    e.stopPropagation();
+  const handleClick = (event) => {
+    event.stopPropagation();
     setState((s) => ({
       ...s,
-      inFocus: !s.inFocus,
+      justClicked: true,
+    }));
+    if (!state.inFocus) {
+      setState((s) => ({
+        ...s,
+        inFocus: true,
+      }));
+    }
+  };
+
+  const blurThis = () => {
+    setState((s) => ({
+      ...s,
+      inFocus: false,
     }));
   };
 
@@ -90,14 +125,28 @@ const Bit = (props) => {
     }
   }, [state.deleted, props]);
 
+  const { moveFocus, setRemovefocus } = props;
+
+  useEffect(() => {
+    if (state.justClicked) {
+      moveFocus();
+      setRemovefocus((s) => [...s, blurThis]);
+      setState((s) => ({
+        ...s,
+        justClicked: false,
+      }));
+    }
+  }, [moveFocus, setRemovefocus, state.justClicked]);
+
   return (
-    <Border onClick={toggleFocus} name="border" listID={props.listID}>
+    <Border onClick={handleClick} name="border" inFocus={state.inFocus}>
       {props.children}
       <Input
         type="text"
         name="BitTitle"
         placeholder="Untitled bit"
         autoComplete="off"
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(event) => {
           if (event.isComposing) return;
           if (event.key === "Enter" || event.key === "Escape")
@@ -106,6 +155,22 @@ const Bit = (props) => {
       />
       <AddButton onClick={addChild} type="button" name="addButton" />
       <RemoveButton onClick={removeThisBit} type="button" name="RemoveButton" />
+
+      {state.inFocus && (
+        <Description
+          type="text"
+          name="BitDescription"
+          placeholder="Describe bit"
+          autoComplete="off"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(event) => {
+            if (event.isComposing) return;
+            if (event.key === "Enter" || event.key === "Escape")
+              document.activeElement.blur();
+          }}
+        />
+      )}
+
       {state.inside}
     </Border>
   );
