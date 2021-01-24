@@ -15,42 +15,79 @@ const AddButton = styled.button`
   }
 `;
 
+const RemoveButton = styled.button`
+  background-color: red;
+  &::before {
+    content: "×";
+    display: inline;
+  }
+`;
+
 const Bit = (props) => {
-  const [state, setState] = useState({ inFocus: false, inside: 0 });
+  const [state, setState] = useState({
+    inFocus: false,
+    inside: [],
+    deleted: false,
+    idGen: 0,
+  });
 
   const addChild = (e) => {
     e.stopPropagation();
     setState((s) => ({
       ...s,
-      inside: s.inside + 1,
+      idGen: s.idGen + 1,
+      inside: [
+        ...s.inside,
+        <Bit key={s.idGen} listID={s.idGen} removeMe={removeChild}>
+          {s.idGen}
+        </Bit>,
+      ],
+    }));
+  };
+
+  const removeThisBit = (e) => {
+    e.stopPropagation();
+    setState((s) => ({
+      ...s,
+      deleted: true,
+    }));
+  };
+
+  const removeChild = (listID) => {
+    setState((s) => ({
+      ...s,
+      inside: [...s.inside.filter((child) => child.props.listID !== listID)],
     }));
   };
 
   const toggleFocus = (e) => {
+    //console.log(state.inside);
     e.stopPropagation();
-    if (e.target.getAttribute("name") === "border") {
-      setState((s) => ({
-        ...s,
-        inFocus: !s.inFocus,
-      }));
-    }
+    setState((s) => ({
+      ...s,
+      inFocus: !s.inFocus,
+    }));
   };
 
   useEffect(() => {
-    console.log("inFocus:", state.inFocus);
-  }, [state.inFocus]);
+    if (state.deleted) {
+      props.removeMe(props.listID);
+    }
+  }, [state.deleted, props]);
 
   return (
-    <Border onClick={toggleFocus} name="border">
+    <Border onClick={toggleFocus} name="border" listID={props.listID}>
       <AddButton onClick={addChild} type="button" name="addButton" />
       {props.children}
-      {Array(state.inside)
-        .fill()
-        .map((e, i) => (
-          <Bit key={i}>{i}</Bit>
-        ))}
+      <RemoveButton onClick={removeThisBit} type="button" name="RemoveButton" />
+      {state.inside}
     </Border>
   );
+};
+
+Bit.defaultProps = {
+  listID: 0,
+  removeMe: () => console.log("pepOMEGAKEKHappyChampHands"),
 };
 
 export default Bit;
