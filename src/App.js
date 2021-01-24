@@ -1,7 +1,7 @@
-import "./App.css";
+import Bit from "./components/Bit";
 
 function App() {
-  return <div className="App"></div>;
+  return <Bit />;
 }
 
 export default App;
